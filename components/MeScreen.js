@@ -1,16 +1,34 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, ActivityIndicator } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { currentUser, setCurrentUser } from "./user";
+import { getNotifications } from "./api";
 
 export default function MeScreen({ navigation }) {
-  // Handle local edits
   const [nickname, setNickname] = useState(currentUser?.nickname || currentUser?.name || "User");
   const [email, setEmail] = useState(currentUser?.email || "unknown@email.com");
-  const [editingField, setEditingField] = useState(null); // 'nickname' | 'email' | null
+  const [editingField, setEditingField] = useState(null);
   const [inputValue, setInputValue] = useState("");
+  const [hasNewNotification, setHasNewNotification] = useState(false);
+  const [loadingNotification, setLoadingNotification] = useState(true);
 
-  // Start editing
+  useEffect(() => {
+    fetchNotifications();
+    
+  }, []);
+
+  const fetchNotifications = async () => {
+    setLoadingNotification(true);
+    try {
+      const res = await getNotifications(currentUser.id);
+      
+      setHasNewNotification(res.data && res.data.length > 0);
+    } catch {
+      setHasNewNotification(false);
+    }
+    setLoadingNotification(false);
+  };
+
   const handleEdit = field => {
     setEditingField(field);
     setInputValue(field === "nickname" ? nickname : email);
@@ -34,12 +52,12 @@ export default function MeScreen({ navigation }) {
     });
   };
 
-  // Avatar first letter
+
   const avatarLetter = (email || "U").charAt(0).toUpperCase();
 
   return (
     <View style={styles.container}>
-      {/* Profile & Info */}
+      {/* Profile */}
       <View style={styles.profileBox}>
         <View style={styles.avatar}>
           <Text style={{ color: "#fff", fontSize: 36, fontWeight: "bold" }}>{avatarLetter}</Text>
@@ -60,7 +78,7 @@ export default function MeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Features Section */}
+     
       <View style={styles.funcRow}>
         <TouchableOpacity style={styles.funcBtn} onPress={() => navigation.navigate("Bidding")}>
           <MaterialCommunityIcons name="handshake" size={30} color="#6495ed" />
@@ -73,11 +91,32 @@ export default function MeScreen({ navigation }) {
       </View>
 
       <TouchableOpacity
-        style={styles.notifyBtn}
-        onPress={() => navigation.navigate("MyNotifications")}
+        style={[
+          styles.notifyBtn,
+          hasNewNotification && { backgroundColor: "#ffeaea", borderColor: "#fa2d3e" }
+        ]}
+        onPress={() => {
+          navigation.navigate("MyNotifications");
+          setHasNewNotification(false); // reset blue
+        }}
+        disabled={loadingNotification}
       >
-        <Ionicons name="notifications-outline" size={26} color="#6495ed" />
-        <Text style={styles.notifyText}>My Notifications</Text>
+        <Ionicons
+          name="notifications-outline"
+          size={26}
+          color={hasNewNotification ? "#fa2d3e" : "#6495ed"}
+        />
+        <Text
+          style={[
+            styles.notifyText,
+            hasNewNotification && { color: "#fa2d3e" }
+          ]}
+        >
+          My Notifications
+        </Text>
+        {loadingNotification && (
+          <ActivityIndicator size={16} color="#fa2d3e" style={{ marginLeft: 10 }} />
+        )}
       </TouchableOpacity>
 
       {/* Logout */}
@@ -128,7 +167,7 @@ const styles = StyleSheet.create({
   funcRow: { flexDirection: "row", justifyContent: "space-evenly", marginVertical: 24 },
   funcBtn: { alignItems: "center", flex: 1, padding: 10 },
   funcText: { marginTop: 4, color: "#333", fontWeight: "bold", fontSize: 16 },
-  notifyBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 18, paddingLeft: 8, backgroundColor: "#f5f7fd", borderRadius: 14, marginHorizontal: 10, marginBottom: 26 },
+  notifyBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 18, paddingLeft: 8, backgroundColor: "#f5f7fd", borderRadius: 14, marginHorizontal: 10, marginBottom: 26, borderWidth: 1, borderColor: "transparent" },
   notifyText: { marginLeft: 8, fontSize: 17, color: "#6495ed", fontWeight: "bold" },
   logoutBtn: { flexDirection: "row", backgroundColor: "#f44", padding: 14, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: "auto" },
   logoutText: { color: "#fff", fontSize: 17, fontWeight: "bold", marginLeft: 8 },

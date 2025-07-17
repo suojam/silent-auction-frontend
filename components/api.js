@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_BASE = "http://192.168.1.79:3000/api";
+const API_BASE = "https://silent-auction-backend.onrender.com/api";
 
 // export const getItems = () => axios.get(`${API_BASE}/items`);
 export const placeBid = (itemId, bidderId, amount) =>
@@ -28,3 +28,7 @@ export const getItems = (sellerId) => {
 
 export const getNotifications = (userId) =>
   axios.get(`${API_BASE}/notifications/user/${userId}`);
+
+
+export const getItemById = (itemId) =>
+  axios.get(`https://silent-auction-backend.onrender.com/api/items/${itemId}`);

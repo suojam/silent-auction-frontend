@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { currentUser } from "./user";
-import { getNotifications } from "./api";
+import { getNotifications, getItemById } from "./api";
 
 export default function MyNotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
+  const [itemDetails, setItemDetails] = useState({}); // key: itemId, value: item obj
 
   useEffect(() => {
     fetchNotifications();
@@ -17,6 +18,21 @@ export default function MyNotificationsScreen() {
     try {
       const res = await getNotifications(currentUser.id);
       setNotifications(res.data);
+
+      // 获取所有通知对应 itemId 去重
+      const itemIds = [...new Set(res.data.map(n => n.itemId))].filter(Boolean);
+
+      // 批量拉取 item 详情
+      const itemDetailPromises = itemIds.map(id =>
+        getItemById(id).then(res => ({ id, item: res.data })).catch(() => null)
+      );
+      const detailArr = await Promise.all(itemDetailPromises);
+      const detailMap = {};
+      detailArr.forEach(obj => {
+        if (obj && obj.item) detailMap[obj.id] = obj.item;
+      });
+      setItemDetails(detailMap);
+
     } catch (e) {
       alert("Failed to fetch notifications");
     }
@@ -32,15 +48,28 @@ export default function MyNotificationsScreen() {
     return <Ionicons name="notifications-outline" size={26} color="#888" style={{ marginRight: 12 }} />;
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.notificationCard}>
-      {renderIcon(item.type)}
-      <View style={{ flex: 1 }}>
-        <Text style={styles.message}>{item.message}</Text>
-        <Text style={styles.date}>{new Date(item.createdAt).toLocaleString()}</Text>
+  const renderItem = ({ item }) => {
+    const itemInfo = itemDetails[item.itemId];
+    return (
+      <View style={styles.notificationCard}>
+        {renderIcon(item.type)}
+        {itemInfo && (
+          <Image source={{ uri: itemInfo.imageUrl }} style={styles.itemImage} />
+        )}
+        <View style={{ flex: 1, marginLeft: 8 }}>
+          <Text style={styles.message}>{item.message}</Text>
+          {itemInfo && (
+            <>
+              <Text style={styles.title}>{itemInfo.title}</Text>
+              <Text style={styles.desc} numberOfLines={2}>{itemInfo.description}</Text>
+              <Text style={styles.price}>Current Highest Bid: ${itemInfo.currentBid}</Text>
+            </>
+          )}
+          <Text style={styles.date}>{new Date(item.createdAt).toLocaleString()}</Text>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", padding: 18 }}>
@@ -71,6 +100,10 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12
   },
+  itemImage: { width: 50, height: 50, borderRadius: 8, backgroundColor: "#eee", marginRight: 10 },
   message: { fontSize: 16, color: "#222" },
+  title: { fontWeight: "bold", fontSize: 15, color: "#444", marginTop: 2 },
+  desc: { fontSize: 12, color: "#555", marginBottom: 2 },
+  price: { color: "#2196f3", fontWeight: "bold", marginTop: 2 },
   date: { fontSize: 12, color: "#888", marginTop: 2 }
 });

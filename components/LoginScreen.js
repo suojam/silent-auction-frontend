@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
+import { KeyboardAvoidingView, Platform, View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
 import axios from "axios";
 import { setCurrentUser } from "./user"; // 新增
 
@@ -9,7 +9,7 @@ export default function LoginScreen({ navigation }) {
 
   const onLogin = async () => {
     try {
-      const res = await axios.post("http://192.168.1.79:3000/api/auth/login", { email, password });
+      const res = await axios.post("https://silent-auction-backend.onrender.com/api/auth/login", { email, password });
       setCurrentUser(res.data.user);  // 保存用户
       navigation.replace("MainTabs");
     } catch (e) {
@@ -18,27 +18,33 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Silent Auction</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        autoCapitalize="none"
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Button title="Login" onPress={onLogin} />
-      <TouchableOpacity onPress={() => navigation.replace("Register")}>
-        <Text style={styles.link}>Don't have an account? Register here</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Silent Auction</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          autoCapitalize="none"
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <Button title="Login" onPress={onLogin} />
+        <TouchableOpacity onPress={() => navigation.replace("Register")}>
+          <Text style={styles.link}>Don't have an account? Register here</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 

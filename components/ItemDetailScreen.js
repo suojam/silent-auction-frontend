@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Button, StyleSheet, TextInput, Alert, Image } from "react-native";
+import { KeyboardAvoidingView, Platform, View, Text, Button, StyleSheet, TextInput, Alert, Image } from "react-native";
 import axios from "axios";
 import { currentUser } from "./user";
 
@@ -13,7 +13,7 @@ export default function ItemDetailScreen({ route, navigation }) {
       return;
     }
     try {
-      await axios.post("http://192.168.1.79:3000/api/bids", {
+      await axios.post("https://silent-auction-backend.onrender.com/api/bids", {
         itemId: item._id || item.id,
         amount: Number(bid),
         bidderId: currentUser?.id,
@@ -22,7 +22,6 @@ export default function ItemDetailScreen({ route, navigation }) {
         {
           text: "OK",
           onPress: () => {
-            // 跳转回主Tab的Home并强制刷新
             navigation.navigate('MainTabs', {
               screen: 'Home',
               params: { forceRefresh: true }
@@ -37,26 +36,32 @@ export default function ItemDetailScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.desc}>{item.description}</Text>
-      <Text style={styles.price}>
-        Current Price: ${item.currentBid || item.price || "-"}
-      </Text>
-      <Text style={styles.deadline}>Auction ends on: {item.deadline}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your bid"
-        keyboardType="numeric"
-        value={bid}
-        onChangeText={setBid}
-      />
-      <Button title="Place Bid" onPress={handleBid} />
-      <View style={{ marginTop: 30 }}>
-        <Button title="Back" onPress={() => navigation.goBack()} />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <View style={styles.container}>
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.desc}>{item.description}</Text>
+        <Text style={styles.price}>
+          Current Price: ${item.currentBid || item.price || "-"}
+        </Text>
+        <Text style={styles.deadline}>Auction ends on: {item.deadline}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your bid"
+          keyboardType="numeric"
+          value={bid}
+          onChangeText={setBid}
+        />
+        <Button title="Place Bid" onPress={handleBid} />
+        <View style={{ marginTop: 30 }}>
+          <Button title="Back" onPress={() => navigation.goBack()} />
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

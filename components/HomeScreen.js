@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, ScrollView, Button, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TextInput, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import ItemCard from "./ItemCard";
 import { getItems } from "./api";
 import { useFocusEffect } from '@react-navigation/native';
 
-const categories = ["All", "Art", "Electronics", "Fashion", "Collectibles"];
+const categories = ["All", "Art", "Electronics", "Fashion", "Collectibles", "Others"];
 
 export default function HomeScreen({ navigation, route }) {
   const [items, setItems] = useState([]);
@@ -13,25 +13,23 @@ export default function HomeScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   const fetchItems = async () => {
-  setLoading(true);
-  try {
-    const res = await getItems();
-    // 排序，保证最新的在最前面
-    setItems(res.data.slice().reverse());
-  } catch (e) {
-    alert("Failed to fetch items");
-  }
-  setLoading(false);
-};
+    setLoading(true);
+    try {
+      const res = await getItems();
+      setItems(res.data.slice().reverse());
+    } catch (e) {
+      alert("Failed to fetch items");
+    }
+    setLoading(false);
+  };
   useEffect(() => {
     fetchItems();
   }, []);
 
-  // 核心：监听 forceRefresh 参数
   useEffect(() => {
     if (route.params?.forceRefresh) {
       fetchItems();
-      navigation.setParams({ forceRefresh: false }); // 清空参数，防止反复刷新
+      navigation.setParams({ forceRefresh: false });
     }
   }, [route.params?.forceRefresh]);
 
@@ -56,24 +54,33 @@ export default function HomeScreen({ navigation, route }) {
           <Text style={{ color: "#fff", fontSize: 18 }}>🔍</Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.hint}>Find auctions, bids, and more.</Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryRow}
-        contentContainerStyle={{ paddingRight: 18, alignItems: 'center' }}
-      >
-        {categories.map(c => (
-          <TouchableOpacity
-            key={c}
-            style={[styles.categoryBtn, category === c && styles.categoryBtnActive]}
-            onPress={() => setCategory(c)}
-          >
-            <Text style={{ fontWeight: "bold", color: category === c ? "#fff" : "#222", fontSize: 15 }}>{c}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={{ height: 48, justifyContent: "center" }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryRow}
+          contentContainerStyle={{ paddingRight: 18, alignItems: 'center' }}
+        >
+          {categories.map(c => (
+            <TouchableOpacity
+              key={c}
+              style={[styles.categoryBtn, category === c && styles.categoryBtnActive]}
+              onPress={() => setCategory(c)}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  category === c && styles.categoryTextActive
+                ]}
+              >
+                {c}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
       <Text style={styles.hint}>Select a category to filter items.</Text>
 
       {loading ? (
@@ -89,7 +96,6 @@ export default function HomeScreen({ navigation, route }) {
           contentContainerStyle={{ paddingBottom: 30 }}
         />
       )}
-      
     </View>
   );
 }
@@ -102,17 +108,26 @@ const styles = StyleSheet.create({
   hint: { color: "#888", marginLeft: 18, fontSize: 13, marginBottom: 6 },
   categoryRow: { flexDirection: "row", marginLeft: 10, marginBottom: 4, paddingVertical: 4 },
   categoryBtn: {
-    width: 105,
+    minWidth: 90,
     height: 40,
+    paddingHorizontal: 10,
     backgroundColor: "#eee",
     borderRadius: 20,
     marginRight: 10,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
   categoryBtnActive: {
-    width: 105,
-    height: 40,
     backgroundColor: "#6495ed"
   },
+  categoryText: {
+    fontWeight: "bold",
+    fontSize: 15,
+    color: "#222",
+    textAlign: "center",
+    lineHeight: 20
+  },
+  categoryTextActive: {
+    color: "#fff"
+  }
 });
